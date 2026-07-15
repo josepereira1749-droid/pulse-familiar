@@ -310,7 +310,7 @@ function ModeTabs({ T, screenMode, setScreenMode }) {
   );
 }
 
-function NowPlayingCard({ T, song, playing }) {
+function NowPlayingCard({ T, song, playing, onPlaySpotify, spotifyStatus }) {
   return (
     <GlassPanel T={T} className="p-4 flex gap-4 items-start relative overflow-hidden">
       <div className="rounded-2xl overflow-hidden shrink-0" style={{ width: 128, height: 96, background: "#000" }}>
@@ -340,7 +340,19 @@ function NowPlayingCard({ T, song, playing }) {
         <div className="text-xl font-black leading-tight mt-1" style={{ color: T.text }}>{song.title}</div>
         <div className="text-sm mt-1" style={{ color: T.text }}>{song.artist}</div>
         <div className="text-xs" style={{ color: T.muted }}>agregada por {song.addedBy}</div>
-        <div className="mt-2.5"><Equalizer T={T} count={14} height={26} barWidth={3} gap={2.5} /></div>
+        <div className="mt-2.5 flex items-center justify-between">
+          <Equalizer T={T} count={14} height={26} barWidth={3} gap={2.5} />
+          <button
+            onClick={() => onPlaySpotify(song)}
+            disabled={spotifyStatus === "loading"}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[10px] font-bold shrink-0"
+            style={{ background: "#1DB954", color: "#000" }}
+          >
+            🎧 {spotifyStatus === "loading" ? "Conectando…" : "Spotify"}
+          </button>
+        </div>
+        {spotifyStatus === "playing" && <div className="text-[11px] mt-1.5 font-bold" style={{ color: "#1DB954" }}>▶️ Sonando en tu Spotify</div>}
+        {spotifyStatus === "error" && <div className="text-[11px] mt-1.5 font-bold" style={{ color: "#FF3B6B" }}>No se pudo — revisa que Spotify esté abierto en algún dispositivo</div>}
       </div>
     </GlassPanel>
   );
@@ -814,6 +826,18 @@ function VistaInvitado(props) {
 
   const togglePlay = () => setPlaying((p) => !p);
 
+  const [spotifyStatus, setSpotifyStatus] = useState("idle");
+  const playOnSpotify = async (song) => {
+    setSpotifyStatus("loading");
+    try {
+      const res = await fetch(`/api/spotify-play?q=${encodeURIComponent(`${song.title} ${song.artist}`)}`);
+      setSpotifyStatus(res.ok ? "playing" : "error");
+    } catch {
+      setSpotifyStatus("error");
+    }
+    setTimeout(() => setSpotifyStatus("idle"), 6000);
+  };
+
   const selectSong = (id) => {
     setQueue((prev) => prev.map((s) => ({ ...s, playing: s.id === id })));
     setPlaying(true);
@@ -859,7 +883,7 @@ function VistaInvitado(props) {
         )}
         {screenMode === "musica" && (
           <>
-            <NowPlayingCard T={T} song={currentSong} playing={playing} />
+            <NowPlayingCard T={T} song={currentSong} playing={playing} onPlaySpotify={playOnSpotify} spotifyStatus={spotifyStatus} />
             <ProgressControls T={T} playing={playing} onToggle={togglePlay} elapsed={elapsed} duration={duration} onNext={() => selectSong(nextSongId(queue, currentSong?.id, 1))} onPrev={() => selectSong(nextSongId(queue, currentSong?.id, -1))} />
             <QuickActions T={T} queueCount={queue.length} onOpenQueue={() => setQueueOpen(!queueOpen)} />
             <QueuePanel T={T} queue={queue} open={queueOpen} setOpen={setQueueOpen} onSelect={selectSong} />
