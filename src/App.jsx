@@ -5,7 +5,7 @@ import {
   Home, Compass, ScanLine, History, User, Plus, X, Mic2, Camera, Sun, Moon, Check,
   Library, Lock, Unlock, Users2, Play, Save, Trophy, Crown, Star, Mic, Flame, Shuffle as Dice,
 } from "lucide-react";
-
+import { supabase } from "./supabaseClient";
 const PRESETS = [
   { id: "pulse", name: "Pulse", a: "#8B5CF6", b: "#4DD8FF" },
   { id: "rockero", name: "Rockero", a: "#FF3B6B", b: "#E8B923" },
